@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Employees Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+</head> 
+<body>
+  <div class="wrapper fadeInDown">
+    <div id="formContent" style="padding: 20px; max-width: 800px; margin: auto;">
+      <h2>Employees Table</h2>
+      <table id="employeesTable" border="1" style="width: 100%; border-collapse: collapse; color: white;">
+        <thead>
+          <tr>
+            <td>ID</td>
+            <td>Employee ID</td>
+            <td>First name</td>
+            <td>Last name</td>
+            <td>Time In</td>
+            <td>Time Out</td>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <button onclick="location.href='dtr.html'" style="margin-top: 20px;">Go to Time In/Out Management</button>
+    </div>
+  </div>
+
+  <!-- Load script here so DOM is ready -->
+  <script src="script.js"></script>
+</body>
+</html>
