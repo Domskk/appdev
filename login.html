@@ -5,15 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Login/Register</title>
   <link rel="stylesheet" href="style.css" />
-  <script src="script.js"></script>
 </head>
 <body>
-<div class="wrapper fadeInDown">
+  <div class="wrapper fadeInDown">
   <div id="formContent">
     <div class="fadeIn first">
       <img src="images/gclogo.png" id="icon" alt="User Icon" />
     </div>
-
+    
     <!-- Login Form -->
     <div id="loginForm">
       <input type="text" id="username" class="fadeIn second" name="username" placeholder="Username" autocomplete="username" />
@@ -24,7 +23,7 @@
       <input type="button" class="fadeIn fourth" value="Log In" id="loginBtn" />
       <p>Don't have an account? <a href="#" id="showRegister">Register here</a></p>
     </div>
-
+    
     <div id="registerForm" style="display:none;">
       <input type="text" id="regUsername" class="fadeIn second" name="regUsername" placeholder="Username" autocomplete="username" />
       <div class="password-wrapper fadeIn third">
@@ -34,9 +33,10 @@
       <input type="button" class="fadeIn fourth" value="Register" id="registerBtn" />
       <p>Already have an account? <a href="#" id="showLogin">Login here</a></p>
     </div>
-
+    
     <div id="message" style="color: red; margin-top: 10px;"></div>
   </div>
 </div>
+<script src="script.js"></script>
 </body>
 </html>

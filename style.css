@@ -51,9 +51,7 @@ h2 {
   min-height: 100%;
   padding: 20px;
 }
-.formContent {
-  padding: 20px; max-width: 800px; margin: auto;
-}
+
 #formContent {
   -webkit-border-radius: 10px 10px 10px 10px;
   border-radius: 10px 10px 10px 10px;

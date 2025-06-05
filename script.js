@@ -22,14 +22,18 @@ function formatDateTime(dateTimeStr) {
 }
 
 function renderEmployeesTable(data) {
+  console.log("Rendering employees table with data:", data);
   let table = document.getElementById("employeesTable");
-  if (!table) return;
+  if (!table) {
+    return;
+  }
   let tbody = table.querySelector("tbody");
   if (!tbody) {
     tbody = document.createElement("tbody");
     table.appendChild(tbody);
   }
-  tbody.innerHTML = "";
+  tbody.innerHTML = ""; // Clear existing rows
+
   data.forEach((item, index) => {
     let row = document.createElement("tr");
     row.innerHTML = `
@@ -37,8 +41,8 @@ function renderEmployeesTable(data) {
       <td>${item.employeeid || ""}</td>
       <td>${item.firstname || ""}</td>
       <td>${item.lastname || ""}</td>
-      <td>${formatDateTime(item.timein)}</td>
-      <td>${formatDateTime(item.timeout)}</td>
+      <td>${item.timein || ""}</td>
+      <td>${item.timeout || ""}</td>
       <td>
         <button class="delete-btn">Delete</button>
       </td>
@@ -54,28 +58,31 @@ function renderEmployeesTable(data) {
 }
 
 // ----- Add employee ---- //
-async function addEmployee(event) {
-  event.preventDefault();
-  let body = {
-    employeeid: event.target.employeeid.value,
-    firstname: event.target.firstname.value,
-    lastname: event.target.lastname.value,
-    timein: event.target.timein.value,
-    timeout: event.target.timeout.value
-  };
+async function addEmployee() {
+  const employeeid = document.getElementById("employeeid").value;
+  const firstname = document.getElementById("firstname").value;
+  const lastname = document.getElementById("lastname").value;
 
-  let request_url = `${base_url}/employee`;
+  const data = { employeeid, firstname, lastname };
+
   try {
-    const response = await fetch(request_url, {
+    const response = await fetch(`${base_url}/addemployee`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      body: JSON.stringify(data),
     });
-    if (!response.ok) throw new Error(`Response status: ${response.status}`);
-    await response.json();
-    getEmployees();
+
+    const result = await response.json();
+    if (response.ok) {
+      alert("Employee added successfully!");
+      getEmployees(); // refresh table
+    } else {
+      console.error("Error:", result.message);
+      document.getElementById("message").innerText = "Failed to add employee.";
+    }
   } catch (error) {
-    console.error(error.message);
+    console.error("Network error:", error);
+    document.getElementById("message").innerText = "Failed to add employee.";
   }
 }
 
@@ -131,7 +138,7 @@ async function deleteEmployee(item) {
 document.addEventListener("DOMContentLoaded", () => {
   getEmployees();
 
-  const addForm = document.getElementById("addemployee");
+  const addForm = document.getElementById("addEmployeeForm");
   if (addForm) addForm.addEventListener("submit", addEmployee);
 
   const editForm = document.getElementById("editemployee");
@@ -199,72 +206,98 @@ document.addEventListener("DOMContentLoaded", () => {
   const loginForm = document.getElementById("loginForm");
   const registerForm = document.getElementById("registerForm");
 
+  if (!loginBtn || !registerBtn || !message || !loginForm || !registerForm) return; 
   loginBtn.addEventListener("click", async () => {
-    const username = document.getElementById("username").value.trim();
-    const password = document.getElementById("password").value;
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value;
 
-    if (!username || !password) {
-      message.textContent = "Please enter username and password.";
-      return;
+  if (!username || !password) {
+    message.textContent = "Please enter username and password.";
+    return;
+  }
+
+  try {
+    const response = await fetch(`${base_url}/login`, {
+      method: 'POST',
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+
+    const text = await response.text();
+    console.log("Raw response text:", text);
+
+    const data = JSON.parse(text); // Parse manually to catch parse errors
+
+    console.log("Parsed JSON data:", data);
+
+   // ...existing code...
+// ...inside your loginBtn click handler, after successful login:
+if (!response.ok || data.status.type !== "success") {
+  message.textContent = (data.status && data.status.message) || "Login failed.";
+} else {
+  // Save username to localStorage
+  localStorage.setItem("username", username);
+  message.textContent = "";
+  window.location.href = "dashboard.html";
     }
+  } catch (error) {
+    message.textContent = "Login failed.";
+    console.error(error);
+  }
+});
 
-    try {
-      const response = await fetch(`${base_url}?request=login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok || data.status !== "success") {
-        message.textContent = data.message || "Login failed.";
-      } else {
-        message.textContent = "";
-        // Redirect or show logged-in UI
-        window.location.href = "/dashboard.html";
-      }
-    } catch (error) {
-      message.textContent = "Login failed.";
-      console.error(error);
-    }
-  });
 
   registerBtn.addEventListener("click", async () => {
-    const username = document.getElementById("regUsername").value.trim();
-    const password = document.getElementById("regPassword").value;
+  const username = document.getElementById("regUsername").value.trim();
+  const password = document.getElementById("regPassword").value;
 
-    if (!username || !password) {
-      message.textContent = "Please enter username and password.";
-      return;
-    }
+  if (!username || !password) {
+    message.textContent = "Please enter username and password.";
+    return;
+  }
 
-    if (password.length < 6) {
-      message.textContent = "Password must be at least 6 characters.";
-      return;
-    }
+  if (password.length < 6) {
+    message.textContent = "Password must be at least 6 characters.";
+    return;
+  }
 
+  try {
+    const response = await fetch(`${base_url}/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+
+    const text = await response.text();
+    console.log("Raw register response text:", text);
+
+    let data;
     try {
-      const response = await fetch(`${base_url}?request=register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok || data.status !== "success") {
-        message.textContent = data.message || "Registration failed.";
-      } else {
-        message.textContent = "Registration successful! You can now login.";
-        registerForm.style.display = "none";
-        loginForm.style.display = "block";
-      }
-    } catch (error) {
-      message.textContent = "Registration failed.";
-      console.error(error);
+      data = JSON.parse(text);
+    } catch (parseError) {
+      throw new Error("Invalid JSON response from server");
     }
-  });
+
+   if (!response.ok || data.status?.type !== "success") {
+  message.textContent = data.status?.message || "Registration failed.";
+} else {
+  message.textContent = "Registration successful! You can now login.";
+  registerForm.style.display = "none";
+  loginForm.style.display = "block";
+}
+  } catch (error) {
+    message.textContent = "Registration failed.";
+    console.error(error);
+  }
+});
+});
+document.addEventListener("DOMContentLoaded", () => {
+  const logoutBtn = document.getElementById("logoutBtn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", () => {
+      window.location.href = "login.html"; // Redirect to login page
+    });
+  }
 });
 document.addEventListener('DOMContentLoaded', () => {
   const dtrTableBody = document.querySelector('#dtrTable tbody');
@@ -345,57 +378,66 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  if (addDtrForm) {
-   addDtrForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
+  function normalizeDtrRecord(record) {
+  return {
+    id: record.id,
+    employeeid: record.employeeid || record.employeeId || '',
+    timein: record.timein || record.timeIn || '',
+    timeout: record.timeout || record.timeOut || '',
+  };
+}
 
-  const employeeId = document.getElementById('employeeid').value.trim();
-  const timeIn = document.getElementById('timein').value;
-  const timeOut = document.getElementById('timeout').value;
+if (addDtrForm) {
+  addDtrForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-  const editIndex = addDtrForm.getAttribute('data-edit-index');
-  const editId = addDtrForm.getAttribute('data-edit-id');
+    const employeeId = document.getElementById('employeeid').value.trim();
+    const timeIn = document.getElementById('timein').value;
+    const timeOut = document.getElementById('timeout').value;
 
-  const dtrPayload = { employeeid: employeeId, timein: timeIn, timeout: timeOut };
+    const editIndex = addDtrForm.getAttribute('data-edit-index');
+    const editId = addDtrForm.getAttribute('data-edit-id');
 
-  try {
-    if (editIndex !== null && editId) {
-      // Update DTR on backend
-      const response = await fetch(`${base_url}/updateDtr`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: editId, timein: timeIn, timeout: timeOut })
-      });
-      if (!response.ok) throw new Error('Failed to update DTR');
-    } else {
-      // Add new DTR on backend
-      const response = await fetch(`${base_url}/addDtr`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(dtrPayload)
-      });
-      if (!response.ok) throw new Error('Failed to add DTR');
-  
-          // Add to localStorage with backend id
-          records.push(savedRecord);
-          saveDtrRecords(records);
-        }
+    const dtrPayload = { employeeid: employeeId, timein: timeIn, timeout: timeOut };
 
-        addDtrForm.reset();
-        addDtrForm.removeAttribute('data-edit-index');
-        addDtrForm.removeAttribute('data-edit-id');
+    try {
+      let savedRecord;
 
-        renderDtrTable();
-        await getEmployees();
-        localStorage.setItem('dtr-updated', Date.now());
-        location.reload();
-      } catch (err) {
-        alert(err.message);
-      }
-    });
-  }
+      if (editIndex !== null && editId) {
+  // Update DTR on backend
+  const response = await fetch(`${base_url}/updateDtr`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: editId, timein: timeIn, timeout: timeOut }),
+  });
+  if (!response.ok) throw new Error('Failed to update DTR');
+  savedRecord = await response.json();
+} else {
+  // Add new DTR on backend
+  const response = await fetch(`${base_url}/addDtr`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(dtrPayload),
+  });
+  if (!response.ok) throw new Error('Failed to add DTR');
+  savedRecord = await response.json();
+}
 
-  // Initial load: sync from backend then render
+      // fetch fresh data from backend and render:
+      await fetchAndSyncDtrFromBackend();
+      await getEmployees();
+
+      addDtrForm.reset();
+      addDtrForm.removeAttribute('data-edit-index');
+      addDtrForm.removeAttribute('data-edit-id');
+      renderDtrTable();
+      await getEmployees();
+      localStorage.setItem('dtr-updated', Date.now());
+    } catch (err) {
+      alert(err.message);
+    }
+  });
+}// Initial load: sync from backend then render
   fetchAndSyncDtrFromBackend();
 
   // Listen for localStorage changes from other tabs
@@ -406,3 +448,5 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
+
+
