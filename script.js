@@ -47,7 +47,6 @@
       </td>
     `;
 
-    // ✅ Now inside forEach, so 'row' and 'item' are in scope
     row.querySelector('.delete-btn').addEventListener('click', (e) => {
       e.stopPropagation();
       if (confirm('Are you sure you want to delete this employee?')) {
