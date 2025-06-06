@@ -21,42 +21,43 @@
     return new Date(dateTimeStr.replace(' ', 'T')).toLocaleString();
   }
 
-  function renderEmployeesTable(data) {
-    console.log("Rendering employees table with data:", data);
-    let table = document.getElementById("employeesTable");
-    if (!table) {
-      return;
-    }
-    let tbody = table.querySelector("tbody");
-    if (!tbody) {
-      tbody = document.createElement("tbody");
-      table.appendChild(tbody);
-    }
-    tbody.innerHTML = ""; // Clear existing rows
+ function renderEmployeesTable(data) {
+  console.log("Rendering employees table with data:", data);
+  let table = document.getElementById("employeesTable");
+  if (!table) return;
 
-    data.forEach((item, index) => {
-      let row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${index + 1}</td>
-        <td>${item.employeeid || ""}</td>
-        <td>${item.firstname || ""}</td>
-        <td>${item.lastname || ""}</td>
-        <td>${item.timein || ""}</td>
-        <td>${item.timeout || ""}</td>
-        <td>
+  let tbody = table.querySelector("tbody");
+  if (!tbody) {
+    tbody = document.createElement("tbody");
+    table.appendChild(tbody);
+  }
+  tbody.innerHTML = ""; // Clear existing rows
+
+  data.forEach((item, index) => {
+    let row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${index + 1}</td>
+      <td>${item.employeeid || ""}</td>
+      <td>${item.firstname || ""}</td>
+      <td>${item.lastname || ""}</td>
+      <td>${item.timein || ""}</td>
+      <td>${item.timeout || ""}</td>
+      <td>
         <button class="delete-btn">Delete</button>
-        </td>
-      `;
+      </td>
+    `;
 
+    // ✅ Now inside forEach, so 'row' and 'item' are in scope
+    row.querySelector('.delete-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (confirm('Are you sure you want to delete this employee?')) {
+        deleteEmployee(item);
+      }
+    });
+
+    tbody.appendChild(row);
   });
-      row.querySelector('.delete-btn').addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (confirm('Are you sure you want to delete this data.employee?')) {
-          deleteEmployee(item);
-        }
-      });
-      tbody.appendChild(row);
-    }
+}
 
   // ----- Add data.employee ---- //
   async function addEmployee() {
@@ -459,5 +460,4 @@
       }
     });
   });
-
 
