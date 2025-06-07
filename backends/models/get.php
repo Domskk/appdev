@@ -1,5 +1,6 @@
 <?php
 include_once "common.php";
+
 class Get extends Common {
     private $pdo;
 
@@ -7,66 +8,79 @@ class Get extends Common {
         $this->pdo = $pdo;
     }
 
-// Example endpoint to fetch all employees
-public function getEmployees() {
-    try {
-        $stmt = $this->pdo->query("SELECT * FROM employees");
-        $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        return $this->generateResponse($employees, "success", "Employees fetched", 200);
-    } catch (PDOException $e) {
-        return $this->generateResponse(null, "failed", $e->getMessage(), 500);
-    }
-}
-public function getEmployeesWithLatestDtr() {
-$sql = "SELECT e.*, d.timein, d.timeout
-FROM employees e
-LEFT JOIN (
-    SELECT t1.*
-    FROM dtr t1
-    INNER JOIN (
-        SELECT employeeid, MAX(id) as max_id
-        FROM dtr
-        GROUP BY employeeid
-    ) t2 ON t1.employeeid = t2.employeeid AND t1.id = t2.max_id
-) d ON e.employeeid = d.employeeid";
-    $data = array();
+    public function getEmployeesWithLatestDtr() {
+        try {
+            $sql = "
+                SELECT 
+                    e.employeeid,
+                    e.firstname,
+                    e.lastname,
+                    d.timein,
+                    d.timeout
+                FROM employees e
+                LEFT JOIN (
+                    SELECT employeeid, timein, timeout
+                    FROM dtr
+                    WHERE (employeeid, id) IN (
+                        SELECT employeeid, MAX(id)
+                        FROM dtr
+                        GROUP BY employeeid
+                    )
+                ) d ON e.employeeid = d.employeeid
+            ";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute();
+            $data = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-    if($result = $this->pdo->query($sql)){
-        while($row = $result->fetch(\PDO::FETCH_ASSOC)){
-            $data[] = $row;
-        }
-        return json_encode($data);
-    } else {
-        echo "Database not connected";
-    }
-}
-    public function getAccounts(){
-        $sql = "SELECT * FROM accounts";
-        $data = array();
-
-            if($result = $this->pdo->query($sql)){
-            while($row = $result->fetch(\PDO::FETCH_ASSOC)){
-                $data[] = $row;
-            }
-            return json_encode($data);
-        } else {
-            echo "Database not connected";
+            return $this->generateResponse(
+                $data,
+                "success",
+                "Employees fetched",
+                200
+            );
+        } catch (\PDOException $e) {
+            return $this->generateResponse(
+                [],
+                "failed",
+                $e->getMessage(),
+                500
+            );
         }
     }
-    public function getDtr(){
-        $sql = "SELECT * FROM dtr";
-        $data = array();
 
-            if($result = $this->pdo->query($sql)){
-            while($row = $result->fetch(\PDO::FETCH_ASSOC)){
-                $data[] = $row;
-            }
-            return json_encode($data);
-        } else {
-            echo "Database not connected";
+    public function getAccounts() {
+        try {
+            $sql = "SELECT id, username, employeeid FROM accounts";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute();
+            $data = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            return $this->generateResponse(
+                $data,
+                "success",
+                "Accounts fetched",
+                200
+            );
+        } catch (\PDOException $e) {
+            return $this->generateResponse(
+                [],
+                "failed",
+                $e->getMessage(),
+                500
+            );
+        }
+    }
+
+    public function getDtr() {
+        try {
+            $sql = "SELECT id, employeeid, timein, timeout FROM dtr";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute();
+            $data = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            return $this->generateResponse($data, "success", "DTR records fetched", 200);
+        } catch (\PDOException $e) {
+            return $this->generateResponse([], "failed", $e->getMessage(), 500);
         }
     }
 }
-
-
 ?>
