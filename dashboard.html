@@ -7,24 +7,8 @@
   <link rel="stylesheet" href="style.css" />
 </head> 
 <body>
-  
   <div class="wrapper fadeInDown">
     <div id="formContent" style="padding: 20px; max-width: 800px; margin: auto;">
-    <form id="addEmployeeForm" border="1" style="width: 100%; border-collapse: collapse; color: white;">
-  <h3>Add New Employee</h3>
-  <label for="employeeid">Employee ID:</label>
-  <input type="text" id="employeeid" name="employeeid" required />
-  <br>
-  <label for="firstname">First Name:</label>
-  <br>
-  <input type="text" id="firstname" name="firstname" required />
-  <br>
-  <label for="lastname">Last Name:</label>
-  <input type="text" id="lastname" name="lastname" required />
-  <button type="submit">Add Employee</button>
-</form>
-
-<div id="addEmployeeMessage"></div>
       <h2>Employees Table</h2>
       <table id="employeesTable" border="1" style="width: 100%; border-collapse: collapse; color: white;">
         <thead>
@@ -32,9 +16,10 @@
             <td>ID</td>
             <td>Employee ID</td>
             <td>First name</td>
-            <td>Last name</td>
+            <td>Last name</td>  
             <td>Time In</td>
             <td>Time Out</td>
+            <td>Actions</td>
           </tr>
         </thead>
         <tbody></tbody>

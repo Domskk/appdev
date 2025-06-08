@@ -8,8 +8,8 @@
 </head>
 <body>
   <div class="wrapper fadeInDown">
-  <div id="formContent">
-    <div class="fadeIn first">
+    <div id="formContent">
+      <div class="fadeIn first">
       <img src="images/gclogo.png" id="icon" alt="User Icon" />
     </div>
     
@@ -30,10 +30,12 @@
         <input type="password" id="regPassword" name="regPassword" placeholder="Password" autocomplete="new-password" />
         <span id="toggleRegPassword" class="toggle-password">Show</span>
       </div>
+      <input type="text" id="regFirstname" class="fadeIn third" name="regFirstname" placeholder="First Name" autocomplete="given-name" />
+      <input type="text" id="regLastname" class="fadeIn third" name="regLastname" placeholder="Last Name" autocomplete="family-name" />
+      <input type="text" id="regEmployeeid" class="fadeIn third" name="regEmployeeid" placeholder="Employee ID" autocomplete="off" />
       <input type="button" class="fadeIn fourth" value="Register" id="registerBtn" />
       <p>Already have an account? <a href="#" id="showLogin">Login here</a></p>
     </div>
-    
     <div id="message" style="color: red; margin-top: 10px;"></div>
   </div>
 </div>

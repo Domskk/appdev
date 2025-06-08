@@ -190,7 +190,29 @@ input[type=text]:placeholder {
   border: none;
   padding: 0 5px;
 }
-
+.modal form {
+  min-width: 300px;
+  text-align: left;
+}
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+}
+.modal label {
+  display: block;
+  margin-bottom: 5px;
+}
+.modal input {
+  width: 100%;
+  padding: 5px;
+  margin-bottom: 10px;
+}
+.modal button {
+  padding: 8px 16px;
+  margin-right: 10px;
+}
 
 
 /* ANIMATIONS */

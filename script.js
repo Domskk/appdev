@@ -242,14 +242,15 @@ async function editEmployee(e) {
 
 // --------- Delete Employee ---------
 async function deleteEmployee(item) {
-  let body = { id: item.employeeid };
   let request_url = `${base_url}/deleteemployee`;
   try {
     const response = await fetch(request_url, {
       method: "DELETE",
       headers: getAuthHeaders(),
-      body: JSON.stringify(body),
+      body: JSON.stringify({ id: item.employeeid }),
     });
+
+    const json = await response.json();
     if (!response.ok) {
       if (response.status === 401) {
         console.error("Unauthorized. Token may be invalid or expired.");
@@ -258,15 +259,19 @@ async function deleteEmployee(item) {
         window.location.href = "login.html";
         return;
       }
-      const errorData = await response.json();
-      throw new Error(errorData.status?.message || `Response status: ${response.status}`);
+      if (response.status === 403) {
+        alert("You don't have permission to delete this employee.");
+        return;
+      }
+      throw new Error(json.status?.message || `Response status: ${response.status}`);
     }
-    const json = await response.json();
-    if (json.status?.type !== "success") {
+
+    if (json.status?.type === "success") {
+      alert("Employee deleted successfully!");
+      getEmployees(); // Refresh the employee table
+    } else {
       throw new Error(json.status?.message || "Failed to delete employee");
     }
-    alert("Employee deleted successfully!");
-    getEmployees();
   } catch (error) {
     console.error('Error deleting employee:', error.message);
     alert('Failed to delete employee: ' + error.message);
@@ -351,6 +356,7 @@ function renderDtrTable(data) {
     const actionsCell = row.querySelector(".actions");
 
     if (item.employeeid == loggedInEmployeeId) {
+      console.log(`Rendering actions for DTR ID ${item.id}: Time Out=${!item.timeout || item.timeout === '-0001-11-30 00:00:00'}, Delete=true`);
       if (!item.timeout || item.timeout === '-0001-11-30 00:00:00') {
         const timeoutBtn = document.createElement("button");
         timeoutBtn.textContent = "Time Out";
@@ -383,14 +389,6 @@ function renderDtrTable(data) {
         });
         actionsCell.appendChild(timeoutBtn);
       }
-
-      const editBtn = document.createElement("button");
-      editBtn.textContent = "Edit";
-      editBtn.style.marginLeft = "5px";
-      editBtn.addEventListener("click", () => {
-        openEditDtrModal(item);
-      });
-      actionsCell.appendChild(editBtn);
 
       const deleteBtn = document.createElement("button");
       deleteBtn.textContent = "Delete";
@@ -429,75 +427,6 @@ function renderDtrTable(data) {
 
     tbody.appendChild(row);
   });
-}
-
-function openEditDtrModal(record) {
-  const modal = document.createElement("div");
-  modal.style.position = "fixed";
-  modal.style.top = "0";
-  modal.style.left = "0";
-  modal.style.width = "100%";
-  modal.style.height = "100%";
-  modal.style.background = "rgba(0,0,0,0.5)";
-  modal.style.display = "flex";
-  modal.style.alignItems = "center";
-  modal.style.justifyContent = "center";
-  modal.style.zIndex = "1000";
-
-  const form = document.createElement("form");
-  form.style.background = "white";
-  form.style.padding = "20px";
-  form.style.borderRadius = "5px";
-  form.style.boxShadow = "0 0 10px rgba(0,0,0,0.3)";
-  const timeinValue = record.timein && record.timein !== '-0001-11-30 00:00:00' ? record.timein.replace(' ', 'T').slice(0, 16) : '';
-  const timeoutValue = record.timeout && record.timeout !== '-0001-11-30 00:00:00' ? record.timeout.replace(' ', 'T').slice(0, 16) : '';
-  form.innerHTML = `
-    <h2>Edit DTR Record</h2>
-    <label>Time In:</label>
-    <input type="datetime-local" id="editTimein" value="${timeinValue}">
-    <br><br>
-    <label>Time Out:</label>
-    <input type="datetime-local" id="editTimeout" value="${timeoutValue}">
-    <br><br>
-    <button type="submit">Save</button>
-    <button type="button" onclick="this.closest('.modal-content').remove()">Cancel</button>
-  `;
-  modal.className = "modal-content";
-
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    let timein = document.getElementById("editTimein").value;
-    let timeout = document.getElementById("editTimeout").value;
-    timein = timein ? new Date(timein).toISOString() : null;
-    timeout = timeout ? new Date(timeout).toISOString() : null;
-    try {
-      const response = await fetch(`${base_url}/updateDtr`, {
-        method: "PATCH",
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ id: record.id, timein, timeout }),
-      });
-      if (!response.ok) {
-        if (response.status === 401) {
-          console.error("Unauthorized. Token may be invalid or expired.");
-          alert("Session expired. Please log in again.");
-          localStorage.clear();
-          window.location.href = "login.html";
-          return;
-        }
-        const errorData = await response.json();
-        throw new Error(errorData.status?.message || "Failed to update DTR");
-      }
-      modal.remove();
-      await getDtrRecords();
-      alert("Success! DTR record updated successfully!");
-    } catch (error) {
-      console.error("Error updating DTR:", error);
-      alert("Failed to update DTR: " + error.message);
-    }
-  });
-
-  modal.appendChild(form);
-  document.body.appendChild(modal);
 }
 
 // --------- LOGIN / REGISTER / LOGOUT ---------
@@ -628,6 +557,7 @@ document.addEventListener("DOMContentLoaded", () => {
         console.error("Login error:", error);
       }
     });
+
     registerBtn.addEventListener("click", async () => {
       const username = document.getElementById("regUsername").value.trim();
       const password = document.getElementById("regPassword").value;
@@ -643,6 +573,10 @@ document.addEventListener("DOMContentLoaded", () => {
         message.textContent = "All fields are required.";
         return;
       }
+      if (isNaN(employeeid) || employeeid <= 0) {
+        message.textContent = "Employee ID must be a valid positive number.";
+        return;
+      }
 
       try {
         const response = await fetch(`${base_url}/register`, {
@@ -652,8 +586,14 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         const data = await response.json();
+        console.log("Registration response:", data);
         if (!response.ok || data.status?.type !== "success") {
-          message.textContent = data.status?.message || "Registration failed.";
+          if (response.status === 409 && data.status?.message.includes("Employee ID already exists")) {
+            message.textContent = "Employee ID already exists. Please use a different ID.";
+            document.getElementById("regEmployeeid").style.border = "2px solid red";
+          } else {
+            message.textContent = data.status?.message || "Registration failed.";
+          }
           return;
         }
 
@@ -669,7 +609,7 @@ document.addEventListener("DOMContentLoaded", () => {
           const timeinResponse = await fetch(`${base_url}/addDtr`, {
             method: 'POST',
             headers: getAuthHeaders(),
-            body: JSON.stringify({ timein: timeinISO, timeout: null }),
+            body: JSON.stringify({ employeeid, timein: timeinISO, timeout: null }),
           });
           if (!timeinResponse.ok) {
             console.warn("Failed to create timein record on register:", timeinResponse.status);
@@ -681,7 +621,9 @@ document.addEventListener("DOMContentLoaded", () => {
         message.textContent = "Registration successful! Redirecting to dashboard...";
         registerForm.style.display = "none";
         loginForm.style.display = "block";
-        window.location.href = "dashboard.html";
+        setTimeout(() => {
+          window.location.href = "dashboard.html";
+        }, 1000);
       } catch (error) {
         message.textContent = "Registration failed: " + error.message;
         console.error("Registration error:", error);
