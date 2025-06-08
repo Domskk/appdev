@@ -8,62 +8,72 @@ class Patch extends Common {
         $this->pdo = $pdo;
     }
 
-    public function updateDtr($id, $employeeid, $timein, $timeout) {
+  public function updateDtr($id, $employeeid, $timein, $timeout) {
         try {
-            // Check if the DTR record exists and belongs to the authenticated user
-            $stmt = $this->pdo->prepare("SELECT employeeid FROM dtr WHERE id = ?");
-            $stmt->execute([$id]);
-            $dtr = $stmt->fetch(\PDO::FETCH_ASSOC);
-
+            $checkStmt = $this->pdo->prepare("SELECT employeeid FROM dtr WHERE id = ?");
+            $checkStmt->execute([$id]);
+            $dtr = $checkStmt->fetch(PDO::FETCH_ASSOC);
             if (!$dtr) {
-                return $this->generateResponse([], "failed", "DTR record not found", 404);
+                return json_encode([
+                    "payload" => [],
+                    "status" => ["type" => "failed", "message" => "DTR record with ID $id not found", "code" => 404],
+                    "prepared_by" => "Jaztine",
+                    "date_generated" => date("Y-m-d H:i:s")
+                ]);
             }
-            if ($dtr['employeeid'] != $employeeid) {
-                return $this->generateResponse([], "failed", "Unauthorized to update this DTR record", 403);
-            }
-
-            // Validate date formats if provided
-            $timeinValue = $timein ? $this->validateVarcharDate($timein) : null;
-            if ($timein && !$timeinValue) {
-                return $this->generateResponse([], "failed", "Invalid timein format", 400);
-            }
-
-            $timeoutValue = $timeout ? $this->validateVarcharDate($timeout) : (isset($timeout) ? '' : null);
-            if ($timeout && !$timeoutValue && $timeout !== '') {
-                return $this->generateResponse([], "failed", "Invalid timeout format", 400);
-            }
-
-            // Build dynamic update query
-            $fields = [];
-            $values = [];
-            if ($timeinValue) {
-                $fields[] = "timein = ?";
-                $values[] = $timeinValue;
-            }
-            if ($timeoutValue !== null) {
-                $fields[] = "timeout = ?";
-                $values[] = $timeoutValue;
+            if ($employeeid !== null && $dtr['employeeid'] != $employeeid) {
+                return json_encode([
+                    "payload" => [],
+                    "status" => ["type" => "failed", "message" => "You can only update your own DTR records", "code" => 403],
+                    "prepared_by" => "Jaztine",
+                    "date_generated" => date("Y-m-d H:i:s")
+                ]);
             }
 
-            if (empty($fields)) {
-                return $this->generateResponse([], "failed", "No fields to update", 400);
+            $query = "UPDATE dtr SET ";
+            $params = [];
+            $updates = [];
+
+            if ($timein !== null) {
+                $updates[] = "timein = ?";
+                $params[] = $timein;
+            }
+            if ($timeout !== null) {
+                $updates[] = "timeout = ?";
+                $params[] = $timeout;
             }
 
-            $values[] = $id;
-            $sql = "UPDATE dtr SET " . implode(", ", $fields) . " WHERE id = ?";
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->execute($values);
+            if (empty($updates)) {
+                return json_encode([
+                    "payload" => [],
+                    "status" => ["type" => "failed", "message" => "No fields to update", "code" => 400],
+                    "prepared_by" => "Jaztine",
+                    "date_generated" => date("Y-m-d H:i:s")
+                ]);
+            }
 
-            return $this->generateResponse(
-                [],
-                "success",
-                "DTR record updated successfully",
-                200
-            );
-        } catch (\PDOException $e) {
-            return $this->generateResponse([], "failed", $e->getMessage(), 500);
+            $query .= implode(", ", $updates) . " WHERE id = ?";
+            $params[] = $id;
+
+            $stmt = $this->pdo->prepare($query);
+            $stmt->execute($params);
+
+            return json_encode([
+                "payload" => [],
+                "status" => ["type" => "success", "message" => "DTR record updated successfully"],
+                "prepared_by" => "Jaztine",
+                "date_generated" => date("Y-m-d H:i:s")
+            ]);
+        } catch (PDOException $e) {
+            return json_encode([
+                "payload" => [],
+                "status" => ["type" => "error", "message" => "Error updating DTR: " . $e->getMessage(), "code" => 500],
+                "prepared_by" => "Jaztine",
+                "date_generated" => date("Y-m-d H:i:s")
+            ]);
         }
     }
+
 
     private function validateVarcharDate($dateStr) {
         try {
@@ -73,5 +83,5 @@ class Patch extends Common {
             return false;
         }
     }
-}
+}   
 ?>

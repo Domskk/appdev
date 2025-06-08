@@ -1,7 +1,7 @@
 <?php
 
 define("SERVER", "localhost");
-define("DBNAME", "dtr_db");
+define("DBNAME", "dtr_db"); // Database name
 define("USERNAME", "root");
 define("PASSWORD", "");
 
