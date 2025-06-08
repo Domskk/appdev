@@ -237,7 +237,6 @@ function openEditModal(item) {
 
 async function editEmployee(e) {
   e.preventDefault();
-  // This function is now handled by the modal submit event
 }
 
 // --------- Delete Employee ---------
